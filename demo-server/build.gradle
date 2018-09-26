@@ -77,12 +77,6 @@ dependencies {
 
     zipped "${dtpGroup}:client-rest:${dtpVersion}@zip"
 
-//
-//    compile project(':portability-api')
-//    compile project(':libraries:logging')
-//
-//
-
 }
 
 def demoDomain = project.hasProperty('appDomain') ? appDomain : "localhost"
