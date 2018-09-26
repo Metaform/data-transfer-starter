@@ -1,0 +1,168 @@
+import com.bmuschko.gradle.docker.tasks.image.DockerBuildImage
+import com.bmuschko.gradle.docker.tasks.image.Dockerfile
+
+/*
+ * Copyright 2018 The Data Transfer Project Authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/**
+ * This sub-project creates a single process runtime for demonstration purposes.
+ *
+ * <p>
+ *     To run you must acquire and set API keys for the services you want to use. See:
+ *     https://github.com/google/data-transfer-project/blob/master/Documentation/Keys.md
+ * <p>
+ *     To run directly from a jar (e.g.
+ *     java -jar distributions/demo-server/build/libs/demo-server-all.jar) you need to set
+ *     the keys as environment variables.
+ * <p>
+ *     To run via Docker you need to copy distributions/demo-server/env.secrets.template to
+ *     distributions/demo-server/env.secrets and fill in your API keys.
+ */
+
+buildscript {
+    dependencies {
+        // this dependency is required as a workaround to a reification error thrown when using the Docker plugin with Java 9
+        classpath('javax.activation:activation:1.1.1')
+    }
+}
+
+plugins {
+    id 'java'
+    id 'application'
+    id 'com.github.johnrengelman.shadow' version '4.0.0'
+    id 'com.bmuschko.docker-remote-api' version '3.2.6'
+}
+
+repositories {
+    jcenter()
+    mavenLocal()
+}
+
+//def demoDomain = project.hasProperty('appDomain') ? appDomain : "localhost"
+//def appPort = project.hasProperty('appPort') ? appPort : "3000"
+//def apiPort = project.hasProperty('apiPort') ? apiPort : "8080"
+
+
+configurations {
+    zipped
+}
+
+
+dependencies {
+    compile "${dtpGroup}:portability-bootstrap-vm:${dtpVersion}"
+    runtime "${dtpGroup}:portability-cloud-${project.rootProject.ext.cloudType}:${dtpVersion}"
+    runtime "${dtpGroup}:portability-security-jwe:${dtpVersion}"
+    runtime "${dtpGroup}:portability-transport-jettyrest:${dtpVersion}"
+
+    runtime "${dtpGroup}:portability-config-yaml:${dtpVersion}"
+
+    runtime "${dtpGroup}:portability-auth-microsoft:${dtpVersion}"
+    runtime "${dtpGroup}:portability-auth-google:${dtpVersion}"
+
+    runtime "${dtpGroup}:portability-data-transfer-microsoft:${dtpVersion}"
+    runtime "${dtpGroup}:portability-data-transfer-google:${dtpVersion}"
+
+    zipped "${dtpGroup}:client-rest:${dtpVersion}@zip"
+
+//
+//    compile project(':portability-api')
+//    compile project(':libraries:logging')
+//
+//
+
+}
+
+def demoDomain = project.hasProperty('appDomain') ? appDomain : "localhost"
+def appPort = project.hasProperty('appPort') ? appPort : "3000"
+def apiPort = project.hasProperty('apiPort') ? apiPort : "8080"
+
+task createApiFile() {
+
+    doLast {
+        def apiFile = file("$buildDir/resources/main/config/api.yaml")
+        apiFile.delete()
+        apiFile.append("baseUrl: https://${demoDomain}:${appPort}\n")
+        apiFile.append("baseApiUrl: https://${demoDomain}:${apiPort}")
+    }
+}
+
+task installWebapp(type: Sync) {
+    dependsOn configurations.zipped
+    group = 'build'
+    def extractDir = "${buildDir}/webapp/html"
+
+    ext.extractedWebApp = fileTree(extractDir) {
+        builtBy "installDependencies"
+    }
+
+    from {
+        configurations.zipped.collect { zipTree(it) }
+    }
+    into extractDir
+}
+
+
+
+mainClassName = 'org.datatransferproject.bootstrap.vm.SingleVMMain'
+
+shadowJar {
+    mergeServiceFiles()
+    exclude '**/pom.properties'
+    exclude '**/pom.xml'
+}
+
+task createDockerfile(type: Dockerfile) {
+    description = 'Builds the Demo Dockerfile, which includes both the frontend served by nginx, and a combined API + transfer worker backend'
+    group = 'docker'
+    dependsOn installWebapp, createApiFile, shadowJar
+    destFile project.file("${buildDir}/demo/Dockerfile")
+    from "${javaDockerContainer}"
+    // Port to open up for the debugger
+    exposePort 5005
+
+    copyFile("build/libs/demo-server-all.jar", "/app/demo-server-all.jar")
+
+    // nginx configuration
+    runCommand("apt-get update")
+    runCommand("apt-get -y install nginx")
+    exposePort 3000
+    // create the user nginx runs as, matches user in nginx.config
+    runCommand("adduser --disabled-password nginx")
+
+    copyFile("src/config/client/nginx.conf", "/etc/nginx")
+    copyFile("src/config/test-keys/server.crt", "/etc/ssl/certs")
+    copyFile("src/config/test-keys/server.key", "/etc/ssl")
+    copyFile("build/webapp/html", "/usr/share/nginx/html")
+
+    // Install supervisor to allow multiple processes to run
+    runCommand("apt-get install -y supervisor")
+    runCommand("mkdir -p /var/log/supervisor")
+
+    copyFile("src/config/demo/supervisord.conf", "/etc/supervisor/conf.d/supervisord.conf")
+
+    defaultCommand("/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf")
+}
+
+task dockerize(type: DockerBuildImage) {
+    description = 'Builds the Demo Docker image which includes both the frontend served by nginx, and a combined API + transfer worker backend'
+    dependsOn shadowJar, createDockerfile //shadowJar, copyWebApp
+    dockerFile = project.file("${buildDir}/demo/Dockerfile")
+    inputDir = project.file(".")
+    tag = 'datatransferproject/starter:latest'
+}
+
+
+

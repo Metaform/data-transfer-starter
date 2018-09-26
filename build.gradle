@@ -1,0 +1,11 @@
+
+repositories {
+    jcenter()
+    mavenLocal()
+}
+
+dependencies {
+//    testImplementation 'junit:junit:4.12'
+}
+
+ext.cloudType = hasProperty('cloudType') ? cloudType : 'local'
