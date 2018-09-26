@@ -10,6 +10,10 @@ This repository serves as a template for writing DTP extensions and deploying th
 ## Build
 `./gradlew dockerize`
 
+## Configuration
+
+Create an env.secrets file from demo-server/env.secrets.template
+
 ## Run
 
 `
