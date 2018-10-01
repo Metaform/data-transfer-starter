@@ -1,0 +1,9 @@
+
+
+dependencies {
+    implementation "${dtpGroup}:portability-spi-transfer:${dtpVersion}"
+    implementation "${dtpGroup}:portability-spi-cloud:${dtpVersion}"
+
+    implementation "com.googlecode.ez-vcard:ez-vcard:0.10.3"  // used as the VCard format
+}
+

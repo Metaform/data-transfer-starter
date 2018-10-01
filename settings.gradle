@@ -17,4 +17,10 @@ include 'services:webservice'
 
 rootProject.name = 'data-transfer-starter'
 
+include ':contoso:contoso-auth'
+include ':contoso:contoso-transfer'
+
+include ':fabrikam:fabrikam-auth'
+include ':fabrikam:fabrikam-transfer'
+
 include ':demo-server'

@@ -69,11 +69,17 @@ dependencies {
 
     runtime "${dtpGroup}:portability-config-yaml:${dtpVersion}"
 
-    runtime "${dtpGroup}:portability-auth-microsoft:${dtpVersion}"
-    runtime "${dtpGroup}:portability-auth-google:${dtpVersion}"
+//    runtime "${dtpGroup}:portability-auth-microsoft:${dtpVersion}"
+//    runtime "${dtpGroup}:portability-auth-google:${dtpVersion}"
+//
+//    runtime "${dtpGroup}:portability-data-transfer-microsoft:${dtpVersion}"
+//    runtime "${dtpGroup}:portability-data-transfer-google:${dtpVersion}"
 
-    runtime "${dtpGroup}:portability-data-transfer-microsoft:${dtpVersion}"
-    runtime "${dtpGroup}:portability-data-transfer-google:${dtpVersion}"
+    runtime project(":contoso:contoso-auth")
+    runtime project(":contoso:contoso-transfer")
+
+    runtime project(":fabrikam:fabrikam-auth")
+    runtime project(":fabrikam:fabrikam-transfer")
 
     zipped "${dtpGroup}:client-rest:${dtpVersion}@zip"
 
@@ -113,6 +119,7 @@ task installWebapp(type: Sync) {
 mainClassName = 'org.datatransferproject.bootstrap.vm.SingleVMMain'
 
 shadowJar {
+    dependsOn createApiFile
     mergeServiceFiles()
     exclude '**/pom.properties'
     exclude '**/pom.xml'
@@ -127,7 +134,7 @@ task createDockerfile(type: Dockerfile) {
     // Port to open up for the debugger
     exposePort 5005
 
-    copyFile("build/libs/demo-server-all.jar", "/app/demo-server-all.jar")
+    copyFile("build/libs/demo-server-${projectVersion}-all.jar", "/app/demo-server-all.jar")
 
     // nginx configuration
     runCommand("apt-get update")

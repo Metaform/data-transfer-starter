@@ -1,0 +1,7 @@
+
+
+dependencies {
+    implementation "${dtpGroup}:portability-spi-api:${dtpVersion}" 
+    implementation "${dtpGroup}:portability-spi-cloud:${dtpVersion}" 
+}
+

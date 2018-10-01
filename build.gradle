@@ -9,3 +9,22 @@ dependencies {
 }
 
 ext.cloudType = hasProperty('cloudType') ? cloudType : 'local'
+
+def sourceProjects() {
+    // define projects containing source code
+    return subprojects.findAll { new File(it.projectDir, 'src').exists() }
+}
+
+configure(sourceProjects()) {
+    repositories {
+        jcenter()
+        mavenLocal()
+    }
+    
+    apply plugin: 'java'
+
+    group = "${projectGroup}"
+    version = "${projectVersion}"
+
+    sourceCompatibility = 1.8
+}
