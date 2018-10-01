@@ -38,6 +38,8 @@ Create an env.secrets file from demo-server/env.secrets.template or use the supp
 
 ## Run
 
+Execute the Docker image:
+
 `docker run --rm -p 3000:443 -p 5005:5005 -p 8080:8080 --env-file demo-server/env.sample.secrets --name dtp-starter datatransferproject/starter`
 
 and point your browser to:
