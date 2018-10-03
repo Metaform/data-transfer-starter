@@ -1,7 +1,9 @@
-
 repositories {
     jcenter()
     mavenLocal()
+    maven {
+        url 'https://dl.bintray.com/test-dtp/DTP'
+    }
 }
 
 dependencies {
@@ -19,8 +21,11 @@ configure(sourceProjects()) {
     repositories {
         jcenter()
         mavenLocal()
+        maven {
+            url 'https://dl.bintray.com/test-dtp/DTP'
+        }
     }
-    
+
     apply plugin: 'java'
 
     group = "${projectGroup}"
