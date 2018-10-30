@@ -36,6 +36,18 @@ or
 
 Create an env.secrets file from demo-server/env.secrets.template or use the supplied one
 
+## Using a Different Domain
+
+If you want to use the demo server with a different domain, pass '-PappDomain=<address>' to the build, as in:
+
+`./gradlew -PappDomain=10.0.0.9 clean shadowJar dockerize`
+
+or
+
+`gradlew -PappDomain=10.0.0.9 clean shadowJar dockerize`
+
+Note the port may also be customized using '-PappPort'. If you change the port, be sure to update the Docker execute command in the following section. 
+
 ## Run
 
 Execute the Docker image:
@@ -46,7 +58,7 @@ and point your browser to:
 
 [https://localhost:3000](https://localhost:3000)   
 
-Note that the SSL ceetificate used for the demo server is a test one and your browser will likely prompt you with a warning.
+Note that the SSL certificate used for the demo server is a test one and your browser will likely prompt you with a warning.
 `
 ## Debugging
 

@@ -51,11 +51,6 @@ repositories {
     mavenLocal()
 }
 
-//def demoDomain = project.hasProperty('appDomain') ? appDomain : "localhost"
-//def appPort = project.hasProperty('appPort') ? appPort : "3000"
-//def apiPort = project.hasProperty('apiPort') ? apiPort : "8080"
-
-
 configurations {
     zipped
 }
@@ -112,6 +107,11 @@ task installWebapp(type: Sync) {
         configurations.zipped.collect { zipTree(it) }
     }
     into extractDir
+
+    doLast {
+
+        ant.replace(file: extractDir + "/main.js", token: "https://localhost:3000", value: "https://${demoDomain}:${appPort}")
+    }
 }
 
 
